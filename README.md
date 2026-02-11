@@ -2,6 +2,10 @@
 
 `sdrconnect-scanner` is a command line utility to run SDRconnect as a scanner.
 
+
+![screenshot of sdrconnect-scanner](sdrconnect-scanner-screenshot.png)
+
+
 *IMPORTANT* `sdrconnect-scanner` requires SDRconnect 1.0.7 or newer
 
 The utility can scan a range of evenly spaced frequencies, or an arbitrary list of frequencies. 
@@ -93,7 +97,7 @@ Settings can be specified within a '[scan]' section or in the default section at
 
 ### Configuration file settings:
 
-- `detect power threshold`: power threshold in dB for a signal to be detected in a frequency being scanned (think S-level)
+- `detect power threshold`: power threshold in dB for a signal to be detected in a frequency being scanned (think S-meter level)
 - `detect snr threshold`: SNR threshold in dB for a signal to be detected in a frequency being scanned
 - `detect time`: time (in ms) the scanner listens to a frequency in order to detect if a signal is present (should be >= 600ms)
 - `listen time`: time (in ms) the scanner stays on a frequency once a signal is detected (default: 500ms = 5s)

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    tags:
+      - '**'
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Install dependencies
+        run: sudo apt update -qq
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build Linux amd64
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o sdrconnect-scanner-linux-amd64
+      - name: Build Linux arm64
+        run: |
+          GOOS=linux GOARCH=arm64 go build -o sdrconnect-scanner-linux-arm64
+      - name: Build Windows amd64
+        run: |
+          GOOS=windows GOARCH=amd64 go build -o sdrconnect-scanner-windows-amd64.exe
+      - name: Build Mac (Darwin) arm64
+        run: |
+          GOOS=darwin GOARCH=arm64 go build -o sdrconnect-scanner-darwin-arm64
+      - name: Checksums
+        run: |
+          sha256sum sdrconnect-scanner-linux-amd64 sdrconnect-scanner-linux-arm64 sdrconnect-scanner-windows-amd64.exe sdrconnect-scanner-darwin-arm64 > checksums-sha256.txt
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            sdrconnect-scanner-linux-amd64
+            sdrconnect-scanner-linux-arm64
+            sdrconnect-scanner-windows-amd64.exe
+            sdrconnect-scanner-darwin-arm64
+            checksums-sha256.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

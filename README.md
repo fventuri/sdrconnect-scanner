@@ -2,6 +2,8 @@
 
 `sdrconnect-scanner` is a command line utility to run SDRconnect as a scanner.
 
+If you just want to run `sdrconnect-scanner` here is the [Quick Start Guide](QuickStartAndTroubleshooting.md).
+
 
 ![screenshot of sdrconnect-scanner](sdrconnect-scanner-screenshot.png)
 

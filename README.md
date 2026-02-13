@@ -103,6 +103,7 @@ Settings can be specified within a '[scan]' section or in the default section at
 - `detect snr threshold`: SNR threshold in dB for a signal to be detected in a frequency being scanned
 - `detect time`: time (in ms) the scanner listens to a frequency in order to detect if a signal is present (should be >= 600ms)
 - `listen time`: time (in ms) the scanner stays on a frequency once a signal is detected (default: 500ms = 5s)
+- `listen time rds`: time (in ms) the scanner stays on a frequency if an RDS PI is detected (must be greater than or equal to listen time)
 - `range`: comma separated triple with start frequency, stop frequency, and frequency step (step can be positive or negative to scan up or down)
 - `list`: comma separated list of frequencies to be scanned
 - `profile`: name of SDRconnect profile to be applied - this is easiest way to run `sdrconnect-scanner`

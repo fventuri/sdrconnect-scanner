@@ -107,6 +107,7 @@ type Scan struct {
 	DetectSNRThreshold   float64
 	DetectTime           time.Duration
 	ListenTime           time.Duration
+	ListenExtraTimeRDS   time.Duration
 	LOOffset             int32
 	LOSpans              []LOSpan
 	// SDRconnect properties
@@ -384,6 +385,19 @@ func readConfigFile(configFile string) (scans []Scan, err error) {
 		if ok {
 			listenTime = time.Duration(listenTimeMs) * time.Millisecond
 		}
+		listenTimeRDSMs, ok, err := getUint32ConfigSetting("listen time rds", section)
+		if err != nil {
+			return nil, err
+		}
+		var listenExtraTimeRDS time.Duration
+		if ok {
+			listenTimeRDS := time.Duration(listenTimeRDSMs) * time.Millisecond
+			if listenTimeRDS < listenTime {
+				err = fmt.Errorf("listen time rds should be greater than or equal to listen time")
+				return nil, err
+			}
+			listenExtraTimeRDS = listenTimeRDS - listenTime
+		}
 		loOffsetFloat, ok, err := getFloat64ConfigSetting("lo offset", section)
 		if err != nil {
 			return nil, err
@@ -434,6 +448,7 @@ func readConfigFile(configFile string) (scans []Scan, err error) {
 			DetectSNRThreshold:   detectSNRThreshold,
 			DetectTime:           detectTime,
 			ListenTime:           listenTime,
+			ListenExtraTimeRDS:   listenExtraTimeRDS,
 			LOOffset:             loOffset,
 			SampleRate:           sampleRate,
 			Demodulator:          demodulator,
@@ -753,6 +768,12 @@ func runScan(scan *Scan) (err error) {
 			err = receiveMessages(&sdrconnectSettings, nil, scan.ListenTime)
 			if err != nil {
 				return
+			}
+			if len(receiveStats.rdsPI) > 0 && scan.ListenExtraTimeRDS > 0 {
+				err = receiveMessages(&sdrconnectSettings, nil, scan.ListenExtraTimeRDS)
+				if err != nil {
+					return
+				}
 			}
 			showStats("listen")
 		}

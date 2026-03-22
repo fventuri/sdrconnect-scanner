@@ -14,6 +14,7 @@ import (
 	"io"
 	"log"
 	"math"
+	"net"
 	"os"
 	"regexp"
 	"slices"
@@ -238,8 +239,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	originalSettings := sdrconnectSettings
+	defer restoreSdrconnectSettings(originalSettings)
 
 	// main scan loop
+	waitingLogged := false
 	for {
 		for idx := range scans {
 			scan := &scans[idx]
@@ -251,6 +255,13 @@ func main() {
 				} else if errors.Is(err, ErrUserCommandNextScan) {
 					err = nil
 					continue
+				} else if isTimeoutError(err) {
+					if !waitingLogged {
+						log.Println("waiting for SDRconnect to be ready...")
+						waitingLogged = true
+					}
+					time.Sleep(5 * time.Second)
+					break
 				} else {
 					log.Println("init scan error:", err)
 					return
@@ -264,11 +275,19 @@ func main() {
 				} else if errors.Is(err, ErrUserCommandNextScan) {
 					err = nil
 					continue
+				} else if isTimeoutError(err) {
+					if !waitingLogged {
+						log.Println("waiting for SDRconnect to be ready...")
+						waitingLogged = true
+					}
+					time.Sleep(5 * time.Second)
+					break
 				} else {
 					log.Println("scan error:", err)
 					return
 				}
 			}
+			waitingLogged = false
 		}
 	}
 }
@@ -584,6 +603,24 @@ func getSdrconnectSettings() (settings SDRconnectSettings, err error) {
 		return
 	}
 
+	result, err = getSdrconnectProperty("device_center_frequency")
+	if err != nil {
+		return
+	}
+	settings.DeviceCenterFrequency, err = strconv.ParseUint(result, 10, 64)
+	if err != nil {
+		return
+	}
+
+	result, err = getSdrconnectProperty("device_vfo_frequency")
+	if err != nil {
+		return
+	}
+	settings.DeviceVFOFrequency, err = strconv.ParseUint(result, 10, 64)
+	if err != nil {
+		return
+	}
+
 	return
 }
 
@@ -782,6 +819,19 @@ func runScan(scan *Scan) (err error) {
 }
 
 // auxiliary functions
+
+func isTimeoutError(err error) bool {
+	var netErr net.Error
+	return errors.As(err, &netErr) && netErr.Timeout()
+}
+
+func restoreSdrconnectSettings(original SDRconnectSettings) {
+	setCenterFrequency(original.DeviceCenterFrequency)
+	setSdrconnectProperty("device_vfo_frequency", strconv.FormatUint(original.DeviceVFOFrequency, 10))
+	setSdrconnectProperty("demodulator", original.Demodulator.String())
+	setSdrconnectProperty("device_sample_rate", strconv.FormatFloat(original.SampleRate, 'f', -1, 64))
+}
+
 
 // config file
 func getStringConfigSetting(setting string, section *ini.Section) (value string, ok bool, err error) {
